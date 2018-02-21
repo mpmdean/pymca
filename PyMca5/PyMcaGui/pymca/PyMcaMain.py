@@ -423,8 +423,24 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
             ddict = dictOrList
 
         toadd = False
-        if self._is2DSelection(ddict):
-            if DEBUG:
+        twoD = self._is2DSelection(ddict)
+        print("data = ", ddict['dataobject'].data)
+        if twoD and (ddict['dataobject'].data in [None, []]):
+            if 1 or DEBUG:
+                print("scatter selection")
+            legend = ddict['legend']
+            # regular mesh or scatter
+            legend = ddict['legend']
+            if legend not in self.imageWindowDict.keys():
+                imageWindow = SilxImageWindow.PyMcaImageWindow(name=legend,
+                        correlator = self.imageWindowCorrelator,
+                        scanwindow=self.scanWindow)
+                self.imageWindowDict[legend] = imageWindow
+                self.mainTabWidget.addTab(imageWindow, legend)
+            self.imageWindowDict[legend]._addSelection(ddict)
+            self.mainTabWidget.setCurrentWidget(imageWindow)                
+        elif twoD:
+            if 1 or DEBUG:
                 print("2D selection")
             if self.imageWindowCorrelator is None:
                 self.imageWindowCorrelator = RGBCorrelator.RGBCorrelator()
@@ -446,15 +462,8 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             hkl = True
                 except:
                     pass
-                print("PyMcaMain WARNING TESTING")
-                RGB = True
                 if hkl:
                     imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(name = legend,
-                                correlator = self.imageWindowCorrelator,
-                                scanwindow=self.scanWindow)
-                elif True:
-                    RGB = False
-                    imageWindow = SilxImageWindow.PyMcaImageWindow(name = legend,
                                 correlator = self.imageWindowCorrelator,
                                 scanwindow=self.scanWindow)
                 else:
@@ -462,13 +471,12 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                 correlator = self.imageWindowCorrelator,
                                 scanwindow=self.scanWindow)
                 self.imageWindowDict[legend] = imageWindow
-                if RGB:
-                    imageWindow.sigAddImageClicked.connect( \
-                         self.imageWindowCorrelator.addImageSlot)
-                    imageWindow.sigRemoveImageClicked.connect( \
-                         self.imageWindowCorrelator.removeImageSlot)
-                    imageWindow.sigReplaceImageClicked.connect( \
-                         self.imageWindowCorrelator.replaceImageSlot)
+                imageWindow.sigAddImageClicked.connect( \
+                     self.imageWindowCorrelator.addImageSlot)
+                imageWindow.sigRemoveImageClicked.connect( \
+                     self.imageWindowCorrelator.removeImageSlot)
+                imageWindow.sigReplaceImageClicked.connect( \
+                     self.imageWindowCorrelator.replaceImageSlot)
                 self.mainTabWidget.addTab(imageWindow, legend)
                 if toadd:
                     self.mainTabWidget.addTab(self.imageWindowCorrelator,
