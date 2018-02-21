@@ -508,9 +508,11 @@ class FileModel(qt.QAbstractItemModel):
         return len(self.getProxyFromIndex(index))
 
     def openFile(self, filename, weakreference=False):
+        print("OPEN FILE", filename)
         gc.collect()
         for item in self.rootItem:
             if item.file.filename == filename:
+                print("SENDING UPDATED SIGNAL")
                 ddict = {}
                 ddict['event'] = "fileUpdated"
                 ddict['filename'] = filename
@@ -519,6 +521,7 @@ class FileModel(qt.QAbstractItemModel):
         phynxFile = h5open(filename)
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
+                print("DISTROYING")
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
                 child = self.rootItem._children[idx]
                 child.clearChildren()
@@ -542,6 +545,7 @@ class FileModel(qt.QAbstractItemModel):
         I create a weak reference to a phynx file instance, get informed when
         the instance disappears, and delete the entry from the view
         """
+        print("appednPHYNX FILE", phynxFile)
         if hasattr(phynxFile, "_sourceName"):
             name = phynxFile._sourceName
         else:
@@ -558,11 +562,13 @@ class FileModel(qt.QAbstractItemModel):
             ddict = {}
             ddict['event'] = "fileUpdated"
             ddict['filename'] = name
+            print("SENDING UPDATED SIGNAL")
             self.sigFileUpdated.emit(ddict)
             return
 
         if weakreference:
             def phynxFileInstanceDistroyed(weakrefObject):
+                print("DISTROYING")
                 idx = self.rootItem._identifiers.index(id(weakrefObject))
                 child = self.rootItem._children[idx]
                 child.clearChildren()
@@ -612,6 +618,7 @@ class FileView(qt.QTreeView):
         fileModel.sigFileUpdated.connect(self.fileUpdated)
 
     def fileAppended(self, ddict=None):
+        print("FileView FILE APPENDED")
         self.doItemsLayout()
         if ddict is None:
             return
@@ -619,6 +626,7 @@ class FileView(qt.QTreeView):
 
 
     def fileUpdated(self, ddict):
+        print("FileView FILE UPDATED")
         rootModelIndex = self.rootIndex()
         if self.model().hasChildren(rootModelIndex):
             rootItem = self.model().getProxyFromIndex(rootModelIndex)

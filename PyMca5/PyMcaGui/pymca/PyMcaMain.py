@@ -171,6 +171,7 @@ from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
 from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
+from PyMca5.PyMcaGui.pymca import SilxImageWindow
 from PyMca5.PyMcaGui.pymca import PyMcaHKLImageWindow
 try:
     #This is to make sure it is properly frozen
@@ -445,8 +446,15 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                             hkl = True
                 except:
                     pass
+                print("PyMcaMain WARNING TESTING")
+                RGB = True
                 if hkl:
                     imageWindow = PyMcaHKLImageWindow.PyMcaHKLImageWindow(name = legend,
+                                correlator = self.imageWindowCorrelator,
+                                scanwindow=self.scanWindow)
+                elif True:
+                    RGB = False
+                    imageWindow = SilxImageWindow.PyMcaImageWindow(name = legend,
                                 correlator = self.imageWindowCorrelator,
                                 scanwindow=self.scanWindow)
                 else:
@@ -454,13 +462,13 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                                 correlator = self.imageWindowCorrelator,
                                 scanwindow=self.scanWindow)
                 self.imageWindowDict[legend] = imageWindow
-
-                imageWindow.sigAddImageClicked.connect( \
-                     self.imageWindowCorrelator.addImageSlot)
-                imageWindow.sigRemoveImageClicked.connect( \
-                     self.imageWindowCorrelator.removeImageSlot)
-                imageWindow.sigReplaceImageClicked.connect( \
-                     self.imageWindowCorrelator.replaceImageSlot)
+                if RGB:
+                    imageWindow.sigAddImageClicked.connect( \
+                         self.imageWindowCorrelator.addImageSlot)
+                    imageWindow.sigRemoveImageClicked.connect( \
+                         self.imageWindowCorrelator.removeImageSlot)
+                    imageWindow.sigReplaceImageClicked.connect( \
+                         self.imageWindowCorrelator.replaceImageSlot)
                 self.mainTabWidget.addTab(imageWindow, legend)
                 if toadd:
                     self.mainTabWidget.addTab(self.imageWindowCorrelator,
