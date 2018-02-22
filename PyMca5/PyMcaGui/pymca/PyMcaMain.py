@@ -171,7 +171,7 @@ from PyMca5.PyMcaGui.pymca import ScanWindow
 from PyMca5.PyMcaGui.pymca import McaWindow
 
 from PyMca5.PyMcaGui.pymca import PyMcaImageWindow
-from PyMca5.PyMcaGui.pymca import SilxImageWindow
+from PyMca5.PyMcaGui.pymca import SilxScatterWindow
 from PyMca5.PyMcaGui.pymca import PyMcaHKLImageWindow
 try:
     #This is to make sure it is properly frozen
@@ -353,6 +353,19 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 value = False
             self.imageWindowDict[key].setPlotEnabled(value)
 
+    def _isScatterSelection(self, ddict):
+        if self._is2DSelection(ddict):
+            if 'selection' in ddict:
+                if 'selectiontype' in ddict['selection']:
+                    if ddict['selection']['selectiontype'] == '2D':
+                        if 'dataobject' in ddict:
+                            dObject = ddict['dataobject']
+                            if hasattr(dObject, 'x'):
+                                if dObject.x is not None:
+                                    if len(dObject.x) == 2:
+                                        return True
+        return False 
+
     def _is2DSelection(self, ddict):
         if 'imageselection' in ddict:
             if ddict['imageselection']:
@@ -425,16 +438,14 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
         toadd = False
         twoD = self._is2DSelection(ddict)
         print("data = ", ddict['dataobject'].data)
-        if twoD and (ddict['dataobject'].data in [None, []]):
+        if self._isScatterSelection(ddict):
             if 1 or DEBUG:
                 print("scatter selection")
             legend = ddict['legend']
             # regular mesh or scatter
             legend = ddict['legend']
             if legend not in self.imageWindowDict.keys():
-                imageWindow = SilxImageWindow.PyMcaImageWindow(name=legend,
-                        correlator = self.imageWindowCorrelator,
-                        scanwindow=self.scanWindow)
+                imageWindow = SilxScatterWindow.PyMcaImageWindow()
                 self.imageWindowDict[legend] = imageWindow
                 self.mainTabWidget.addTab(imageWindow, legend)
             self.imageWindowDict[legend]._addSelection(ddict)

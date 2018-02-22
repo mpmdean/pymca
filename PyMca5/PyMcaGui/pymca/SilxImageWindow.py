@@ -143,6 +143,7 @@ class PyMcaImageWindow(PlotWindow):
             if dataObject.data is None:
                 # This is the SCAN regular mesh case
                 print("Monitor to be handled")
+                SCATTER = True
                 if hasattr(dataObject, "y"):
                     if dataObject.y is None:
                         print("Nothing to plot")
@@ -151,7 +152,26 @@ class PyMcaImageWindow(PlotWindow):
                         dataObject.y[0] = numpy.array([dataObject.y[0]])
                     dataObject.data = dataObject.y[0]
                     data0 = dataObject.y[0]
-                    if hasattr(dataObject, "x"):
+                    if not hasattr(dataObject, "x"):
+                        SCATTER = False
+                        # take it as it is
+                        if len(data0.shape) == 1:
+                            # this is a curve
+                            nRows = 1
+                            nColumns = data0.size
+                        elif len(data0.shape) == 2:
+                            # this is an image
+                            nRows = data0.shape[0]
+                            nColumns = data0.shape[1]
+                        else:
+                            # this is a stack of images
+                            dataObject.data = dataObject.y
+                        dataObject.data = numpy.zeros((len(dataObject.y),
+                                                       int(nRows),
+                                                       int(nColumns)),
+                                                       data0.dtype)
+                        
+                    else hasattr(dataObject, "x"):
                         for i in range(len(dataObject.x)):
                             if numpy.isscalar(dataObject.x[i]):
                                 dataObject.x[i] = numpy.array([dataObject.x[i]])
@@ -160,9 +180,22 @@ class PyMcaImageWindow(PlotWindow):
                             x1 = dataObject.x[1]
                             if data0.size == (x0.size * x1.size):
                                 print("REGULAR MESH")
+                                SCATTER = False
+                                if len(data0.shape) == 2:
+                                    # should I deduce who is X and Y or take what the user says?
+                                    # take what the user provides
+                                    nColumns = x0.size
+                                    nRows = x1.size
+                                dataObject.data = numpy.zeros((len(dataObject.y),
+                                                               int(nRows),
+                                                               int(nColumns)),
+                                                               data0.dtype)
+                                for yIndex in range(len(dataObject.y)):
+                                    tmpData = dataObject.y[yIndex][:]
+                                    tmpData.shape = nRows, nColumns
+                                    dataObject.data[yIndex] = tmpData
                             elif (x0.size == data0.size) and (x1.size == data0.size):
-                                    print("SCATTER PLOT (sure) OR REGULAR MESH (possible)")
-                            if len(data0.shape) == 1:
+                                print("SCATTER PLOT (sure) OR REGULAR MESH (possible)")
                                 #we have to figure out the shape ...
                                 x0.shape = -1
                                 x1.shape = -1
@@ -170,31 +203,39 @@ class PyMcaImageWindow(PlotWindow):
                                     nColumns = numpy.argmin(abs(x0-x0[0]) < 1.0e-6)
                                     nRows = x1.size / nColumns
                                     if nRows!= int(nRows):
-                                        raise ValueError("2D Selection not understood")
-                                    transpose = False
-                                    self._yScale = x0[0], x0[nColumns] - x0[0]
-                                    self._xScale = x1[0], x1[1] - x1[0]
+                                        print("SCATTER")
+                                        #raise ValueError("2D Selection not understood")
+                                    else:
+                                        SCATTER = False
+                                        transpose = False
+                                        self._yScale = x0[0], x0[nColumns] - x0[0]
+                                        self._xScale = x1[0], x1[1] - x1[0]
                                 elif abs(x1[1] - x1[0]) < 1.0e-6:
                                     nRows = numpy.argmin(abs(x1-x1[0]) < 1.0e-6)
                                     nColumns = x0.size / nRows
                                     if nColumns != int(nColumns):
-                                        raise ValueError("2D Selection not understood")
-                                    transpose = True
-                                    self._xScale = x0[0], x0[1] - x0[0]
-                                    self._yScale = x1[0], x1[nRows] - x1[0]
-                                else:
-                                    raise TypeError("2D Selection is not a regular mesh")
-                                dataObject.data = numpy.zeros((len(dataObject.y),
-                                                               int(nRows),
-                                                               int(nColumns)),
-                                                               data0.dtype)
-                                for yIndex in range(len(dataObject.y)):
-                                    if transpose:
-                                        tmpData = numpy.transpose(dataObject.y[yIndex])[:]
+                                        print("SCATTER")
+                                        #raise ValueError("2D Selection not understood")
                                     else:
-                                        tmpData = dataObject.y[yIndex][:]
-                                    tmpData.shape = nRows, nColumns
-                                    dataObject.data[yIndex] = tmpData
+                                        SCATTER = False
+                                        transpose = True
+                                        self._xScale = x0[0], x0[1] - x0[0]
+                                        self._yScale = x1[0], x1[nRows] - x1[0]
+                                else:
+                                    print("SCATTER")
+                                    #raise TypeError("2D Selection is not a regular mesh")
+                                if not SCATTER:
+                                    dataObject.data = numpy.zeros((len(dataObject.y),
+                                                                   int(nRows),
+                                                                   int(nColumns)),
+                                                                   data0.dtype)
+                                    for yIndex in range(len(dataObject.y)):
+                                        if transpose:
+                                            tmpData = numpy.transpose(dataObject.y[yIndex])[:]
+                                        else:
+                                            tmpData = dataObject.y[yIndex][:]
+                                        tmpData.shape = nRows, nColumns
+                                        dataObject.data[yIndex] = tmpData
             elif hasattr(dataObject, "x") and (dataObject.x is not None):
                 shape = dataObject.data.shape
                 if len(dataObject.x) == 2:
