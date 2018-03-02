@@ -449,7 +449,7 @@ class PyMcaMain(PyMcaMdi.PyMcaMdi):
                 self.imageWindowDict[legend] = imageWindow
                 self.mainTabWidget.addTab(imageWindow, legend)
             self.imageWindowDict[legend]._addSelection(ddict)
-            self.mainTabWidget.setCurrentWidget(imageWindow)                
+            self.mainTabWidget.setCurrentWidget(self.imageWindowDict[legend])                
         elif twoD:
             if 1 or DEBUG:
                 print("2D selection")
